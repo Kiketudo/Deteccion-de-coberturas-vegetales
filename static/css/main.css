@@ -1,0 +1,53 @@
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+#image-uploader {
+    background-color: #3498db;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+#upload-form {
+    margin-top: 10px;
+}
+
+button {
+    background-color: #2ecc71;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.image-container {
+    flex: 0 1 calc(33.33% - 20px); /* Ajusta el ancho de las imágenes según el número de imágenes por fila */
+    margin: 10px;
+    text-align: center;
+    background-color: #fff;
+    padding: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+@media screen and (max-width: 768px) {
+    .image-container {
+        flex: 0 1 calc(50% - 20px); /* Cambia a dos imágenes por fila en pantallas más pequeñas */
+    }
+}
+img {
+    max-width: 100%;
+    height: auto;
+}

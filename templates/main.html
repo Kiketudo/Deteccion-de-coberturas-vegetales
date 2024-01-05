@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subida de Imágenes</title>
+    <link rel="stylesheet" type="text/css" href="static/css/main.css">
+</head>
+<body>
+<div id="image-uploader">
+    <h1>Subida de Imágenes</h1>
+    <form method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        {{ form.csrf_token }}
+        {{ form.imagenes.label }}
+        {{ form.imagenes(multiple="multiple") }}
+        <input type="submit" value="Subir Imagen">
+    </form>
+</div>
+<div class="gallery" id="image-container">
+    {% if uploaded_images %}
+        {% for image in uploaded_images %}
+            <div class="image-container">
+                {% if image.original_image %}
+                    <h2>Imagen Original</h2>
+                    <img src="{{ os.path.join('/', image.original_image) }}" alt="Original Image">
+                    <form method="post" action="/procesar_imagen">
+                        {{ form.csrf_token }}
+                        <input type="hidden" name="ruta_imagen" value="{{ image.original_image }}">
+                        <button type="submit">Procesar Imagen</button>
+                    </form>
+                {% endif %}
+
+                {% if image.processed_image %}
+                    <h2>Imagen Procesada</h2>
+                    <img src="{{ os.path.join('/', image.processed_image) }}" alt="Processed Image">
+                    <form action="{{ os.path.join('/', 'download', image.processed_image) }}" method="get">
+                        <button type="submit">Descargar Imagen Procesada</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+</body>
+</html>
