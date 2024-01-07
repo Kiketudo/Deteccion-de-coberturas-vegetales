@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="static/css/main.css">
 </head>
 <body>
-<div id="image-uploader">
+<!--div id="image-uploader">
     <h1>Subida de Imágenes</h1>
     <form method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
@@ -16,31 +16,68 @@
         {{ form.imagenes(multiple="multiple") }}
         <input type="submit" value="Subir Imagen">
     </form>
-</div>
+    <label for="opciones">Selecciona una opción:</label>
+    <select id="opciones" name="opciones">
+        <option value="opcion1">Opción 1</option>
+        <option value="opcion2">Opción 2</option>
+        <option value="opcion3">Opción 3</option>
+    </select>
+</div-->
+<a href="{{ url_for('archivos') }}">Mis archivos</a>
 <div class="gallery" id="image-container">
     {% if uploaded_images %}
-        {% for image in uploaded_images %}
-            <div class="image-container">
-                {% if image.original_image %}
+        {% for image in uploaded_images.keys() %}
+            <div class="image-container" data-instance="{{ loop.index }}">
+                {% if image %}
                     <h2>Imagen Original</h2>
-                    <img src="{{ os.path.join('/', image.original_image) }}" alt="Original Image">
-                    <form method="post" action="/procesar_imagen">
-                        {{ form.csrf_token }}
-                        <input type="hidden" name="ruta_imagen" value="{{ image.original_image }}">
-                        <button type="submit">Procesar Imagen</button>
+                    <img src="{{ os.path.join('/', image) }}" alt="Original Image">
+                    <!--button type="button" onclick="procesarImagen('{{  image|e }}')">Procesar Imagen</button-->
+                    <form class="miFormulario">
+                        <input type="hidden" class="rutaImagen" value="{{image}}">
+                        <button type="button" onclick=" procesarImagen('{{ loop.index }}')">Procesar Imagen</button>
                     </form>
-                {% endif %}
+                
 
-                {% if image.processed_image %}
+                <div class="Imagen_procesada"style="display: none;">
                     <h2>Imagen Procesada</h2>
-                    <img src="{{ os.path.join('/', image.processed_image) }}" alt="Processed Image">
-                    <form action="{{ os.path.join('/', 'download', image.processed_image) }}" method="get">
+                    <img class="processed-image" alt="Processed Image">
+                    <form class="processed-form"  method="get">
                         <button type="submit">Descargar Imagen Procesada</button>
                     </form>
+                </div>
                 {% endif %}
             </div>
         {% endfor %}
     {% endif %}
 </div>
+<script>
+    function procesarImagen(instance) {
+        console.log("asdaksjdnasdj")
+        console.log(instance)
+
+        var rutaImagen = document.querySelector('.image-container[data-instance="' + instance + '"] .rutaImagen').value;
+        console.log(rutaImagen)
+        // Actualizar el atributo src de la imagen original
+    // Acceder al valor del campo rutaImagen
+        fetch('/process/', {
+            method: 'POST',
+            body: rutaImagen,
+            /*headers: {
+                'X-CSRF-Token': obtenerCSRFToken(),
+            }*/
+        })
+        .then(response => response.text())
+        .then(data => {
+            datosRespuesta = data;
+            console.log(data);
+            document.querySelector('.image-container[data-instance="' + instance + '"] .processed-image').src = "/" + datosRespuesta;
+            document.querySelector('.image-container[data-instance="' + instance + '"] .processed-form').action = "\/" + "download/" + datosRespuesta;
+            document.querySelector('.image-container[data-instance="' + instance + '"] .Imagen_procesada').style.display = "block";
+        })
+        .catch(error => {
+            console.error('Error en la solicitud fetch:', error);
+        });
+    }
+</script>
 </body>
 </html>

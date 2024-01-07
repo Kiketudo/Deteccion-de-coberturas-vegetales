@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="static/css/folder.css">>
+    <title>{{ folder_name }} - File Explorer</title>
+</head>
+<body>
+    <h1>{{ folder_name }} - File Explorer</h1>
+    <form id="miFormulario"  method="post">
+        <ul>
+            {% for item in files_and_folders %}
+                <li>
+                    <input type="checkbox" name="selected_files" value="{{ folder_name }}/{{ item }}">
+                    {{ item }}
+                </li>
+            {% endfor %}
+        </ul>
+        <button type="submit">Procesar</button>
+        <button type="button" onClick="delete_file()">Eliminar</button>
+        <button type="button" onClick="download_file()">Descargar</button>
+    </form>
+
+    <a href="{{ url_for('archivos') }}">Volver al directorio principal</a>
+    <script>
+        function delete_file(){
+            var formulario = document.getElementById('miFormulario');
+            var formData = new FormData(formulario);
+            fetch('/delete_file/', {
+            method: 'POST',
+            body: formData,
+            /*headers: {
+                'X-CSRF-Token': obtenerCSRFToken(),
+            }*/
+        })
+        .then(response => response.text())
+        .then(data => {
+            datosRespuesta = data;
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('Error en la solicitud fetch:', error);
+        });
+        }
+        function download_file(){
+            var formulario = document.getElementById('miFormulario');
+            var formData = new FormData(formulario);
+            fetch('/download/', {
+            method: 'POST',
+            body: formData,
+            /*headers: {
+                'X-CSRF-Token': obtenerCSRFToken(),
+            }*/
+        })
+        .then(response => response.text())
+        .then(data => {
+            datosRespuesta = data;
+            console.log(data);
+        })
+        }
+    </script>
+</body>
+</html>
