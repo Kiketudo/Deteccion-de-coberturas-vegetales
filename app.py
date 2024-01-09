@@ -6,11 +6,14 @@ from datetime import datetime,timedelta
 from io import BytesIO
 import os
 import uuid
+import zipfile
+import tempfile
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
-
+from modelos.U_Net import eval
+import modelos.U_Net.model
 app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = 'sesiones/'
@@ -26,9 +29,8 @@ class ImageUploadForm(FlaskForm):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     crea_sesion()
-    uploaded_images = {}
     form = ImageUploadForm()
-
+    uploaded_images = session['uploaded_images'] 
     if form.validate_on_submit():
         imagenes = request.files.getlist('imagenes')
         for imagen in imagenes:
@@ -94,10 +96,8 @@ def save_image_output(file):
 def process_image():
     # Abrir la imagen con Pillow
     original_image_path = request.data.decode('utf-8')
-    img = Image.open(original_image_path)
-
     # Procesar la imagen (en este caso, convertirla a escala de grises)
-    processed_img = img.convert('L')
+    processed_img = eval.evaluar(original_image_path)
     # Guardar la imagen procesada en el servidor"""
     processed_image_path = original_image_path.replace(os.path.splitext(original_image_path)[1], '_processed.jpg').replace('uploads','outputs')
     processed_img.save(processed_image_path)
@@ -117,6 +117,50 @@ def download_processed_image(sesion,filename,state):
 def uploaded_file(sesion,filename,state):
     return send_file(os.path.join(app.config['UPLOAD_FOLDER'],sesion,state,filename), as_attachment=True)
 
+@app.route('/descargar',methods=['POST'])
+def download_selected_itmes():
+    selected_files = request.form.getlist('selected_files')
+    if(selected_files):
+        for file_path in selected_files:
+            # Realiza la operación que desees con cada archivo seleccionado
+            print(f"Descargando archivo: {file_path}")
+            user_id = session.get('user_id') 
+            temp_dir = tempfile.mkdtemp()
+            zip_file_path = os.path.join(temp_dir, 'selected_files.zip')
+
+        with zipfile.ZipFile(zip_file_path, 'w') as zip_file:
+            # Agregar cada archivo seleccionado al archivo zip
+            for file_path in selected_files:
+                file_name = os.path.basename(file_path)
+                file_full_path = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'outputs')
+                zip_file.write(file_full_path +'/'+ file_path, arcname=file_name)
+
+        # Enviar el archivo zip como respuesta de descarga
+        return send_file(zip_file_path, as_attachment=True, download_name='selected_files.zip')
+    else:
+        abort(400, 'No se han seleccionado archivos.')
+
+@app.route('/proces/', methods=['POST'])
+def process_various():
+    original_image_paths = request.get_json().get('selectedFiles', [])
+    print(original_image_paths)
+    print("tastdahsdvashgd")
+    user_id=session.get('user_id')
+    folder_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'uploads')
+    folder_out_name=os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'outputs')
+    for path in original_image_paths:
+        print(path)
+        processed_img = eval.evaluar(os.path.join(folder_name,path))
+        processed_image_path = path.replace(os.path.splitext(path)[1], '_processed.jpg')
+        processed_img.save(os.path.join(folder_out_name,processed_image_path))
+    
+    #actualiza el diccionario de la sesión
+        uploaded_images=session.get('uploaded_images')
+        uploaded_images[path]=processed_image_path
+        session['uploaded_images']=uploaded_images
+    return redirect(url_for('show_files',folder_name='outputs'))
+
+
 def delete_session_folder():
     # Obtención del id de la sesión
     session_id = session.id()
@@ -134,16 +178,18 @@ def show_files(folder_name):
     # Verificar si la ruta es un directorio
     if os.path.isdir(folder_path):
         files_and_folders = os.listdir(folder_path)
-        return render_template('folders.html', folder_path=folder_name, files_and_folders=files_and_folders)
+        return render_template('folders.html', folder_name=folder_name, files_and_folders=files_and_folders)
     else:
         # Si no es un directorio, redirige a la página principal
         return redirect(url_for('index'))
 
 def crea_sesion():
-    if session.get('user_id') :
+    if not session.get('user_id') :
         user_id = str(uuid.uuid4())
         session['user_id'] =user_id
         session['last_activity'] = datetime.now()
+        uploaded_images = {}
+        session['uploaded_images'] = uploaded_images
         folder_name = 'session-{}'.format(user_id)+'/'
         carpeta =os.path.join(app.config['UPLOAD_FOLDER'], folder_name,'uploads/')
         carpeta_out =os.path.join(app.config['UPLOAD_FOLDER'], folder_name,'outputs/')

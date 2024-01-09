@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="static/css/main.css">
 </head>
 <body>
-<!--div id="image-uploader">
+<div id="image-uploader">
     <h1>Subida de Imágenes</h1>
     <form method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
@@ -22,7 +22,7 @@
         <option value="opcion2">Opción 2</option>
         <option value="opcion3">Opción 3</option>
     </select>
-</div-->
+</div>
 <a href="{{ url_for('archivos') }}">Mis archivos</a>
 <div class="gallery" id="image-container">
     {% if uploaded_images %}
@@ -36,15 +36,13 @@
                         <input type="hidden" class="rutaImagen" value="{{image}}">
                         <button type="button" onclick=" procesarImagen('{{ loop.index }}')">Procesar Imagen</button>
                     </form>
-                
-
-                <div class="Imagen_procesada"style="display: none;">
-                    <h2>Imagen Procesada</h2>
-                    <img class="processed-image" alt="Processed Image">
-                    <form class="processed-form"  method="get">
-                        <button type="submit">Descargar Imagen Procesada</button>
-                    </form>
-                </div>
+                    <div class="Imagen_procesada"style="display: none;">
+                        <h2>Imagen Procesada</h2>
+                        <img class="processed-image" alt="Processed Image">
+                        <form class="processed-form"  method="get">
+                            <button type="submit">Descargar Imagen Procesada</button>
+                        </form>
+                    </div>
                 {% endif %}
             </div>
         {% endfor %}
