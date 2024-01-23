@@ -18,9 +18,9 @@
     </form>
     <label for="opciones">Selecciona una opción:</label>
     <select id="opciones" name="opciones">
-        <option value="opcion1">Opción 1</option>
-        <option value="opcion2">Opción 2</option>
-        <option value="opcion3">Opción 3</option>
+        <option value="opcion1" selected>U-Net</option>
+        <option value="opcion2">W-Net</option>
+        <option value="opcion3">clustering</option>
     </select>
 </div>
 <a href="{{ url_for('archivos') }}">Mis archivos</a>
@@ -54,20 +54,27 @@
         console.log(instance)
 
         var rutaImagen = document.querySelector('.image-container[data-instance="' + instance + '"] .rutaImagen').value;
-        console.log(rutaImagen)
+        var selectElement = document.getElementById("opciones");
+        var selectedValue = selectElement.value;
+        console.log(selectedValue)
         // Actualizar el atributo src de la imagen original
     // Acceder al valor del campo rutaImagen
         fetch('/process/', {
             method: 'POST',
-            body: rutaImagen,
-            /*headers: {
-                'X-CSRF-Token': obtenerCSRFToken(),
-            }*/
+            //body: rutaImagen,
+            body: JSON.stringify({
+            opcionSeleccionada: selectedValue,
+            imagen: rutaImagen
+            }),
+            headers: {
+                //'X-CSRF-Token': obtenerCSRFToken(),
+                'Content-Type': 'application/json',
+            }
         })
         .then(response => response.text())
         .then(data => {
             datosRespuesta = data;
-            console.log(data);
+            //console.log(data);
             document.querySelector('.image-container[data-instance="' + instance + '"] .processed-image').src = "/" + datosRespuesta;
             document.querySelector('.image-container[data-instance="' + instance + '"] .processed-form').action = "\/" + "download/" + datosRespuesta;
             document.querySelector('.image-container[data-instance="' + instance + '"] .Imagen_procesada').style.display = "block";

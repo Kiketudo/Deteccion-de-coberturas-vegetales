@@ -12,7 +12,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
-from modelos.U_Net import eval
+from modelos.U_Net import eval as UnetEval
 import modelos.U_Net.model
 app = Flask(__name__)
 
@@ -95,9 +95,15 @@ def save_image_output(file):
 @app.route('/process/', methods=['POST'])
 def process_image():
     # Abrir la imagen con Pillow
-    original_image_path = request.data.decode('utf-8')
+    datos = request.get_json()
+    opcion_seleccionada = datos.get('opcionSeleccionada')
+    original_image_path = datos.get('imagen')
+    print('sdfsdfs')
+    print('opcipon:'+ opcion_seleccionada)
+    #original_image_path = request.data.decode('utf-8')
     # Procesar la imagen (en este caso, convertirla a escala de grises)
-    processed_img = eval.evaluar(original_image_path)
+    #processed_img = UnetEval.evaluar(original_image_path)
+    processed_img=select(opcion_seleccionada,original_image_path)
     # Guardar la imagen procesada en el servidor"""
     processed_image_path = original_image_path.replace(os.path.splitext(original_image_path)[1], '_processed.jpg').replace('uploads','outputs')
     processed_img.save(processed_image_path)
@@ -142,15 +148,17 @@ def download_selected_itmes():
 
 @app.route('/proces/', methods=['POST'])
 def process_various():
-    original_image_paths = request.get_json().get('selectedFiles', [])
-    print(original_image_paths)
-    print("tastdahsdvashgd")
+    datos = request.get_json()
+    opcion_seleccionada = datos.get('opcionSeleccionada')
+    original_image_paths = datos.get('selectedFiles', [])
+    #original_image_paths = request.get_json().get('selectedFiles', [])
     user_id=session.get('user_id')
     folder_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'uploads')
     folder_out_name=os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'outputs')
     for path in original_image_paths:
         print(path)
-        processed_img = eval.evaluar(os.path.join(folder_name,path))
+        #processed_img = UnetEval.evaluar(os.path.join(folder_name,path))
+        processed_img = select(opcion_seleccionada,os.path.join(folder_name,path))
         processed_image_path = path.replace(os.path.splitext(path)[1], '_processed.jpg')
         processed_img.save(os.path.join(folder_out_name,processed_image_path))
     
@@ -178,6 +186,8 @@ def show_files(folder_name):
     # Verificar si la ruta es un directorio
     if os.path.isdir(folder_path):
         files_and_folders = os.listdir(folder_path)
+        if folder_name=='Ortomapas':
+            return render_template('orthotif.html')
         return render_template('folders.html', folder_name=folder_name, files_and_folders=files_and_folders)
     else:
         # Si no es un directorio, redirige a la página principal
@@ -197,6 +207,15 @@ def crea_sesion():
             os.makedirs(carpeta)
         if not os.path.exists(carpeta_out):
             os.makedirs(carpeta_out)
+def select(option,route):
+    match option:
+        case 'opcion1':
+            return UnetEval.evaluar(route)
+        case 'opcion2':
+            return eval.evaluar(route)
+        case 'opcion3':
+            return eval.evaluar(route)
+
 
 """@app.teardown_request
 def teardown_request(exception = None):
