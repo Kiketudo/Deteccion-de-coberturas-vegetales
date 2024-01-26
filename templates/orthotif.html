@@ -6,6 +6,17 @@
     <link rel="stylesheet" type="text/css" href="static/css/folder.css">>
     <title>{{ folder_name }} - File Explorer</title>
 </head>
+<h1>Subir Ortoma</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.ortomap.label }}
+            {{ form.ortomap() }}
+        </p>
+        <p>
+            <input type="submit" value="Subir">
+        </p>
+    </form>
 <body>
     <h1> File Explorer - {{ folder_name }} </h1>
     <form id="miFormulario"  method="post" action="/descargar">
@@ -22,7 +33,6 @@
             {% endfor %}
         </ul>
         <button type="button" onClick="process_file()">Procesar</button>
-        
     </form>
 
     <a href="{{ url_for('archivos') }}">Volver al directorio principal</a>
@@ -43,7 +53,7 @@
                 }
             });
             console.log(selectedItems)
-            fetch('/proces/', {
+            fetch('/procesortho/', {
             method: 'POST',
             body: JSON.stringify({ selectedFiles: selectedItems,
                 opcionSeleccionada: selectedValue }),

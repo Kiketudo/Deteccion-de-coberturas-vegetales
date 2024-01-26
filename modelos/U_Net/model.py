@@ -32,7 +32,8 @@ class UNetResnet(torch.nn.Module):
         self.out = out_conv(64, 64, n_classes)
 
     def forward(self, x):
-        x_in = torch.tensor(x.clone())
+        #x_in = torch.tensor(x.clone())
+        x_in = x.clone().detach()
         x = self.encoder.relu(self.encoder.bn1(self.encoder.conv1(x)))
         x1 = self.encoder.layer1(x)
         x2 = self.encoder.layer2(x1)

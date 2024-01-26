@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as functional
-from configure import Config
-from Ncuts import NCutsLoss
+from modelos.W_Net.Ncuts import NCutsLoss
+from modelos.W_Net.configure import Config
 config = Config()
 #from configure import Config
 class WNet(torch.nn.Module):

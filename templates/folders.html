@@ -25,6 +25,8 @@
         <button type="button" onClick="process_file()">Procesar</button>
         {% elif folder_name == 'outputs' %}
         <button type="submit">Descargar</button>
+        {% elif folder_name == 'Orthomaps' %}
+        <button type="button" onClick="process_orto()">Procesar</button>
         {% endif %}
         
     </form>
@@ -48,6 +50,39 @@
             });
             console.log(selectedItems)
             fetch('/proces/', {
+            method: 'POST',
+            body: JSON.stringify({ selectedFiles: selectedItems,
+                opcionSeleccionada: selectedValue }),
+            headers: {
+                //'X-CSRF-Token': obtenerCSRFToken(),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.text())
+        .then(data => {
+            datosRespuesta = data;
+            console.log(data);
+        })
+        }
+        function seleccionarTodos(checkbox) {
+        var checkboxes = document.getElementsByName('selected_files');
+
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = checkbox.checked;
+        }
+        }
+        function process_orto(){
+            var checkboxes = document.getElementsByName('selected_files');
+            var selectedItems = [];
+            var selectedValue = document.getElementById("opciones").value;
+            // Recorrer los checkboxes y agregar los elementos seleccionados al array
+            checkboxes.forEach(function (checkbox) {
+                if (checkbox.checked) {
+                    selectedItems.push(checkbox.value);
+                }
+            });
+            console.log(selectedItems)
+            fetch('/procesortho/', {
             method: 'POST',
             body: JSON.stringify({ selectedFiles: selectedItems,
                 opcionSeleccionada: selectedValue }),

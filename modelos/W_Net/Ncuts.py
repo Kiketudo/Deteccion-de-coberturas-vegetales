@@ -6,7 +6,7 @@ import time
 import pdb
 import subprocess
 import numpy as np
-from configure import Config
+from modelos.W_Net.configure import Config
 
 config = Config()
 

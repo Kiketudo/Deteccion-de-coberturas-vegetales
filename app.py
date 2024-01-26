@@ -13,19 +13,26 @@ from flask_wtf.csrf import CSRFProtect
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 from modelos.U_Net import eval as UnetEval
+from modelos.W_Net import eval as WnetEval
+from modelos.Clustering import demo
 import modelos.U_Net.model
+import ortomap
 app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = 'sesiones/'
 UPLOAD_FOLDER = app.config['UPLOAD_FOLDER'] 
 app.config['SESSION_COOKIE_MAX_AGE'] = 1800
 app.config['SECRET_KEY'] = '?\xbf,\xb4\x8d\xa3"<\x9c\xb0@\x0f5\xab,w\xee\x8d$0\x13\x8b83'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB
+app.config['MAX_CONTENT_LENGTH'] = 600 * 1024 * 1024  # 600 MB
 app.permanent_session_lifetime = timedelta(minutes=30)
 #csrf = CSRFProtect(app)
 class ImageUploadForm(FlaskForm):
     imagenes = FileField('Selecciona una imagen', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg', 'gif'],'Solo se permiten archivos de imagen.')])
-
+class orthoUploadForm(FlaskForm):
+    ortomap = FileField('Ortomap', validators=[
+        FileRequired(),
+        FileAllowed(['jpg', 'png', 'jpeg','tif'])
+    ])
 @app.route('/', methods=['GET', 'POST'])
 def index():
     crea_sesion()
@@ -168,6 +175,41 @@ def process_various():
         session['uploaded_images']=uploaded_images
     return redirect(url_for('show_files',folder_name='outputs'))
 
+@app.route('/ortho', methods=['GET', 'POST'])
+def orthomap():
+    form = orthoUploadForm()
+    user_id=session.get('user_id')
+    folder_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'Orthomaps')
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+        files_and_folders = os.listdir(folder_name)
+    else:
+       files_and_folders = os.listdir(folder_name)
+    if form.validate_on_submit():
+        ortomap = form.ortomap.data
+        filename = os.path.join(folder_name, ortomap.filename)
+        ortomap.save(filename)
+        return render_template('orthotif.html', form=form,folder_name='Orthomaps',files_and_folders=files_and_folders)
+
+    return render_template('orthotif.html', form=form,folder_name='Orthomaps',files_and_folders=files_and_folders)
+
+@app.route('/procesortho/', methods=['POST'])
+def process_ortho():
+    datos = request.get_json()
+    opcion_seleccionada = datos.get('opcionSeleccionada')
+    original_image_paths = datos.get('selectedFiles', [])
+    user_id=session.get('user_id')
+    folder_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'Orthomaps')
+    out_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'outputs')
+    temp_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'temp')
+    for path in original_image_paths:
+        print(path)
+        orto=ortomap.orthoseg(temp_folder=temp_name)
+        processed_img = orto.pipeline(os.path.join(folder_name,path),opcion_seleccionada)
+        processed_image_path = path.replace(os.path.splitext(path)[1], '_processed.jpg')
+        processed_img.save(os.path.join(out_name,processed_image_path))
+    files_and_folders = os.listdir(out_name)
+    return render_template('folders.html', folder_name='outputs', files_and_folders=files_and_folders)
 
 def delete_session_folder():
     # Obtención del id de la sesión
@@ -186,8 +228,8 @@ def show_files(folder_name):
     # Verificar si la ruta es un directorio
     if os.path.isdir(folder_path):
         files_and_folders = os.listdir(folder_path)
-        if folder_name=='Ortomapas':
-            return render_template('orthotif.html')
+        #if folder_name=='Orthomaps':
+        #    return render_template('orthotif.html',folder_name=folder_name, files_and_folders=files_and_folders)
         return render_template('folders.html', folder_name=folder_name, files_and_folders=files_and_folders)
     else:
         # Si no es un directorio, redirige a la página principal
@@ -207,14 +249,15 @@ def crea_sesion():
             os.makedirs(carpeta)
         if not os.path.exists(carpeta_out):
             os.makedirs(carpeta_out)
+            
 def select(option,route):
     match option:
         case 'opcion1':
             return UnetEval.evaluar(route)
         case 'opcion2':
-            return eval.evaluar(route)
+            return WnetEval.evaluar(route)
         case 'opcion3':
-            return eval.evaluar(route)
+            return demo.main(route)
 
 
 """@app.teardown_request

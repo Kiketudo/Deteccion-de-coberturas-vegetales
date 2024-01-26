@@ -7,11 +7,12 @@ import shutil
 import tifffile
 from modelos.U_Net.model import UNetResnet
 from modelos.U_Net import eval as UnetEval
+from modelos.W_Net import eval as WnetEval
+from modelos.Clustering import demo
 band_to_indice = {'B':0,'G':1,'R':2,'RE':3,'NIR':4,'thermal':5}
 
 class orthoseg():
     def __init__(self,
-                    model = None,
                     output_ortho_file = 'ortho_mask.tif',
                     temp_folder     = 'temp',
                     sub_image_size  = (416,512), 
@@ -31,7 +32,6 @@ class orthoseg():
         self.sub_mask_dir   = os.path.join(temp_folder,'sub_masks')
         self.sub_img_list   = [] # array with the sub_image names 
         self.path_to_save_ortho_mask = output_ortho_file
-        self.model=model
         self.device = device
 
         self.width  = -1
@@ -64,8 +64,8 @@ class orthoseg():
 
             sub_img_list = [] 
 
-            target_height = 416
-            target_width  = 512
+            target_height = self.sub_image_size[0]
+            target_width  = self.sub_image_size[1]
 
             width  = self.width
             height = self.height
@@ -138,20 +138,20 @@ class orthoseg():
                 print(lh,hh,lw,hw)
                 raster_mask[lh:hh,lw:hw] = pred_mask
             
-            #shutil.rmtree(self.sub_mask_dir)
+            shutil.rmtree(self.sub_mask_dir)
             print("[WAN] Directory deleted: %s"%(self.sub_mask_dir))
-            #shutil.rmtree(self.sub_img_dir)
+            shutil.rmtree(self.sub_img_dir)
             print("[WAN] Directory deleted: %s"%(self.sub_img_dir))
             return(raster_mask)
 
-    def pipeline(self,path):
+    def pipeline(self,path,option):
             raster = self.load_ortho(path)
             # Splitting
             print("[INF] Ortho splitting")
             sub_img_list = self.ortho_splitting(raster)
             # Segmentation network
             print("[INF] Segmentation")
-            self.segmentation(sub_img_list)
+            self.segmentation(sub_img_list,option)
             # rebuild orthomask path_to_save_mask_raster,path_to_ortho,path_to_masks
             print("[INF] Rebuilding")
             # path_to_save_mask_ortho = os.path.join(path_to_file,'ortho_mask.tif')
@@ -160,10 +160,10 @@ class orthoseg():
             img = img.convert('RGB')
             img = img.crop((0,0,self.width,self.height))
 
-            img.save("output_file"+'.png')
+            #img.save("output_file"+'.png')
             print("[INF] Finished")
             return(img)
-    def segmentation(self,sub_img_list):
+    def segmentation(self,sub_img_list,option):
         '''
         Semenatic segmentation of sub-images
 
@@ -174,20 +174,23 @@ class orthoseg():
 
         for i,file in enumerate(sub_img_list):
             img_path = os.path.join(self.sub_img_dir,file+'.'+self.format)
-            mask_img = UnetEval.evaluar(img_path)
+            mask_img = select(option,img_path)
             mask_path = os.path.join(self.sub_mask_dir,file + '.' + self.format)
             mask_img.save(mask_path)
             # mpimg.imsave(os.path.join(self.sub_mask_dir,file),img_mask)
 
-
+def select(option,route):
+    match option:
+        case 'opcion1':
+            return UnetEval.evaluar(route)
+        case 'opcion2':
+            return WnetEval.evaluar(route)
+        case 'opcion3':
+            return demo.main(route)
 def parse_name(file):
         h,w = file.split('_')
         return(int(h),int(w))
-orto=orthoseg()
-path=r'E:\imagenes_memoria\Task-of-2024-01-22T150108374Z-orthophoto.tif'
-ortho=orto.pipeline(path)
-imagen_coloreada = Image.fromarray(ortho.astype(np.uint8))
-imagen_coloreada = imagen_coloreada.convert('RGB')
-imagen_recortada = imagen_coloreada.crop((0,0,952,902))
-
-imagen_recortada.save("output_file"+'.png')
+# if __name__ == '__main__':
+#     orto = orthoseg()
+#     path=r'E:\imagenes_memoria\Task-of-2024-01-22T150108374Z-orthophoto.tif'
+#     orto.pipeline(path,'opcion1')
