@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="static/css/folder.css">>
+    <link rel="stylesheet" type="text/css" href="static/css/folder.css">
+    <link rel="shortcut icon" href="static\imgs\favicon.ico">
     <title>{{ folder_name }} - File Explorer</title>
 </head>
 <h1>Subir Ortoma</h1>
@@ -22,7 +23,7 @@
     <form id="miFormulario"  method="post" action="/descargar">
         <ul>
             <li>
-                <input type="checkbox" id="seleccionarTodos" onclick="seleccionarTodos(this)">
+                <input type="checkbox" id="seleccionarTodos" onclick="selectAll()">
                 <label for="seleccionarTodos">Seleccionar Todos</label>
             </li>
             {% for item in files_and_folders %}
@@ -67,13 +68,15 @@
             datosRespuesta = data;
             console.log(data);
         })
+        .catch(err => console.error(err));
         }
-        function seleccionarTodos(checkbox) {
-        var checkboxes = document.getElementsByName('selected_files');
+        function selectAll() {
+            var checkboxes = document.getElementsByName('selected_files');
+            var seleccionarTodosCheckbox = document.getElementById('seleccionarTodos');
 
-        for (var i = 0; i < checkboxes.length; i++) {
-            checkboxes[i].checked = checkbox.checked;
-        }
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = seleccionarTodosCheckbox.checked;
+            }
         }
     </script>
 </body>

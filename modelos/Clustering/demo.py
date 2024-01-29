@@ -140,7 +140,7 @@ def main(imagen):
     print(im_target)
     im_target_rgb = np.array([label_colours[ c % args.nChannel ] for c in im_target])
     im_target_rgb = im_target_rgb.reshape( im.shape ).astype( np.uint8 )
-    
-    return im_target_rgb
+    print(type(im_target_rgb))
+    return Image.fromarray(im_target_rgb)
     #cv2.imwrite( ruta_destino , im_target_rgb )
     

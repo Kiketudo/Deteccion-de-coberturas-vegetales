@@ -15,15 +15,18 @@ from werkzeug.utils import secure_filename
 from modelos.U_Net import eval as UnetEval
 from modelos.W_Net import eval as WnetEval
 from modelos.Clustering import demo
+import threading
+import time
+import shutil
 import modelos.U_Net.model
 import ortomap
 app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = 'sesiones/'
-UPLOAD_FOLDER = app.config['UPLOAD_FOLDER'] 
 app.config['SESSION_COOKIE_MAX_AGE'] = 1800
 app.config['SECRET_KEY'] = '?\xbf,\xb4\x8d\xa3"<\x9c\xb0@\x0f5\xab,w\xee\x8d$0\x13\x8b83'
 app.config['MAX_CONTENT_LENGTH'] = 600 * 1024 * 1024  # 600 MB
+MAX_CONTENT = 5 * 1024 * 1024 # 5 MB
 app.permanent_session_lifetime = timedelta(minutes=30)
 #csrf = CSRFProtect(app)
 class ImageUploadForm(FlaskForm):
@@ -41,7 +44,7 @@ def index():
     if form.validate_on_submit():
         imagenes = request.files.getlist('imagenes')
         for imagen in imagenes:
-            if imagen.content_length > app.config['MAX_CONTENT_LENGTH']:
+            if imagen.content_length > MAX_CONTENT:
                 return "El tamaño del archivo excede el límite permitido (5 MB)."
 
         # Almacenar la imagen en el servidor
@@ -64,15 +67,16 @@ def archivos():
     folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder_name)
     # Obtén la lista de archivos y carpetas en el directorio uploads
     files_and_folders = os.listdir(folder_path)
+    print('vamos a ver tio por que no entra')
     return render_template('index.html', files_and_folders=files_and_folders)
 
 def save_image(file):
 # Generación del nombre de la carpeta
     user_id = session.get('user_id')
-    folder_name = 'session-{}'.format(user_id)+'/'
+    folder_name = 'session-{}'.format(user_id)
 # Creación de la carpeta
-    carpeta =os.path.join(app.config['UPLOAD_FOLDER'], folder_name,'uploads/')
-    carpeta_out =os.path.join(app.config['UPLOAD_FOLDER'], folder_name,'outputs/')
+    carpeta =os.path.join(app.config['UPLOAD_FOLDER'], folder_name,'uploads')
+    carpeta_out =os.path.join(app.config['UPLOAD_FOLDER'], folder_name,'outputs')
     if not os.path.exists(carpeta):
         os.makedirs(carpeta)
     if not os.path.exists(carpeta_out):
@@ -106,6 +110,7 @@ def process_image():
     opcion_seleccionada = datos.get('opcionSeleccionada')
     original_image_path = datos.get('imagen')
     print('sdfsdfs')
+    print(original_image_path)
     print('opcipon:'+ opcion_seleccionada)
     #original_image_path = request.data.decode('utf-8')
     # Procesar la imagen (en este caso, convertirla a escala de grises)
@@ -119,6 +124,7 @@ def process_image():
     uploaded_images=session.get('uploaded_images')
     uploaded_images[original_image_path]=processed_image_path
     session['uploaded_images']=uploaded_images
+    print(uploaded_images)
     print(processed_image_path)
     return processed_image_path
 
@@ -158,22 +164,23 @@ def process_various():
     datos = request.get_json()
     opcion_seleccionada = datos.get('opcionSeleccionada')
     original_image_paths = datos.get('selectedFiles', [])
-    #original_image_paths = request.get_json().get('selectedFiles', [])
     user_id=session.get('user_id')
     folder_name = os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'uploads')
     folder_out_name=os.path.join(app.config['UPLOAD_FOLDER'],'session-{}'.format(user_id),'outputs')
     for path in original_image_paths:
         print(path)
-        #processed_img = UnetEval.evaluar(os.path.join(folder_name,path))
-        processed_img = select(opcion_seleccionada,os.path.join(folder_name,path))
+        original_image_path = os.path.join(folder_name,path)
+        processed_img = select(opcion_seleccionada,original_image_path)
         processed_image_path = path.replace(os.path.splitext(path)[1], '_processed.jpg')
-        processed_img.save(os.path.join(folder_out_name,processed_image_path))
+        processed_image_path =os.path.join(folder_out_name,processed_image_path)
+        processed_img.save(processed_image_path)
     
-    #actualiza el diccionario de la sesión
+        #actualiza el diccionario de la sesión
         uploaded_images=session.get('uploaded_images')
-        uploaded_images[path]=processed_image_path
+        uploaded_images[original_image_path]=processed_image_path
         session['uploaded_images']=uploaded_images
-    return redirect(url_for('show_files',folder_name='outputs'))
+        print(uploaded_images)
+    return uploaded_images
 
 @app.route('/ortho', methods=['GET', 'POST'])
 def orthomap():
@@ -189,6 +196,7 @@ def orthomap():
         ortomap = form.ortomap.data
         filename = os.path.join(folder_name, ortomap.filename)
         ortomap.save(filename)
+        files_and_folders = os.listdir(folder_name)
         return render_template('orthotif.html', form=form,folder_name='Orthomaps',files_and_folders=files_and_folders)
 
     return render_template('orthotif.html', form=form,folder_name='Orthomaps',files_and_folders=files_and_folders)
@@ -206,7 +214,7 @@ def process_ortho():
         print(path)
         orto=ortomap.orthoseg(temp_folder=temp_name)
         processed_img = orto.pipeline(os.path.join(folder_name,path),opcion_seleccionada)
-        processed_image_path = path.replace(os.path.splitext(path)[1], '_processed.jpg')
+        processed_image_path = path.replace(os.path.splitext(path)[1], '_ortho_processed.jpg')
         processed_img.save(os.path.join(out_name,processed_image_path))
     files_and_folders = os.listdir(out_name)
     return render_template('folders.html', folder_name='outputs', files_and_folders=files_and_folders)
@@ -258,15 +266,36 @@ def select(option,route):
             return WnetEval.evaluar(route)
         case 'opcion3':
             return demo.main(route)
+        
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
 
+def limpiar_directorios():
+    while True:
+        ruta_base = 'sesiones'
 
-"""@app.teardown_request
-def teardown_request(exception = None):
-    # Comprobación de si la sesión ha caducado
-     print(session['last_activity'])
-    #if session.permanent is False and session.last_activity < (datetime.datetime.now() - timedelta(seconds=app.config['SESSION_COOKIE_MAX_AGE'])):
-        # Borrado de la carpeta
-     delete_session_folder()"""
+        # Obtener la lista de directorios
+        directorios = os.listdir(ruta_base)
 
+        # Obtener la hora actual
+        ahora = datetime.now()
+        # Duración de inactividad antes de eliminar un directorio (1 hora en este ejemplo)
+        duracion_inactividad = app.permanent_session_lifetime
+        # Iterar sobre los directorios y eliminar aquellos que han estado inactivos por más de 1 hora
+        for directorio in directorios:
+            ruta_directorio = os.path.join(ruta_base, directorio)
+            tiempo_creacion = datetime.fromtimestamp(os.path.getctime(ruta_directorio))
+
+            # Calcular el tiempo transcurrido desde la creación del directorio
+            tiempo_transcurrido = ahora - tiempo_creacion
+            if tiempo_transcurrido > duracion_inactividad:
+                # Eliminar directorio si ha estado inactivo por más de 1 hora
+                shutil.rmtree(ruta_directorio)
+                print('Eliminado: '+ ruta_directorio)
+        time.sleep(3600)
+# Iniciar la tarea en segundo plano
+tarea_limpiar_directorios = threading.Thread(target=limpiar_directorios)
+tarea_limpiar_directorios.start()
 if __name__ == '__main__':
     app.run(debug=True)

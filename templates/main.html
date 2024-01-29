@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subida de Imágenes</title>
     <link rel="stylesheet" type="text/css" href="static/css/main.css">
+    <link rel="shortcut icon" href="static\imgs\favicon.ico">
 </head>
 <body>
 <div id="image-uploader">
@@ -24,6 +25,7 @@
     </select>
 </div>
 <a href="{{ url_for('archivos') }}">Mis archivos</a>
+<a href="{{ url_for('orthomap') }}">Ortomapas</a>
 <div class="gallery" id="image-container">
     {% if uploaded_images %}
         {% for image in uploaded_images.keys() %}
@@ -54,8 +56,12 @@
         console.log(instance)
 
         var rutaImagen = document.querySelector('.image-container[data-instance="' + instance + '"] .rutaImagen').value;
+        var boton = document.querySelector('.image-container[data-instance="' + instance + '"] button');
         var selectElement = document.getElementById("opciones");
         var selectedValue = selectElement.value;
+        console.log(boton)
+        boton.disabled = true;
+        boton.classList.add('loading');
         console.log(selectedValue)
         // Actualizar el atributo src de la imagen original
     // Acceder al valor del campo rutaImagen
@@ -78,6 +84,8 @@
             document.querySelector('.image-container[data-instance="' + instance + '"] .processed-image').src = "/" + datosRespuesta;
             document.querySelector('.image-container[data-instance="' + instance + '"] .processed-form').action = "\/" + "download/" + datosRespuesta;
             document.querySelector('.image-container[data-instance="' + instance + '"] .Imagen_procesada').style.display = "block";
+            boton.disabled = false;
+            boton.classList.remove('loading');
         })
         .catch(error => {
             console.error('Error en la solicitud fetch:', error);

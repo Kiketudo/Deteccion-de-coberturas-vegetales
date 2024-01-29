@@ -25,7 +25,9 @@ button {
     cursor: pointer;
     font-size: 16px;
 }
-
+.loading {
+    cursor: wait !important;
+}
 .gallery {
     display: flex;
     flex-wrap: wrap;
