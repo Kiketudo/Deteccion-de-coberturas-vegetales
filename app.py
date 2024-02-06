@@ -30,7 +30,7 @@ MAX_CONTENT = 5 * 1024 * 1024 # 5 MB
 app.permanent_session_lifetime = timedelta(minutes=30)
 #csrf = CSRFProtect(app)
 class ImageUploadForm(FlaskForm):
-    imagenes = FileField('Selecciona una imagen', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg', 'gif'],'Solo se permiten archivos de imagen.')])
+    imagenes = FileField('Selecciona una imagen', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg', 'tif'],'Solo se permiten archivos de imagen.')])
 class orthoUploadForm(FlaskForm):
     ortomap = FileField('Ortomap', validators=[
         FileRequired(),

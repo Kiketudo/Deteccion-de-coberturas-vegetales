@@ -47,7 +47,10 @@
             var checkboxes = document.getElementsByName('selected_files');
             var selectedItems = [];
             var selectedValue = document.getElementById("opciones").value;
+            var button = document.querySelector('button');
             // Recorrer los checkboxes y agregar los elementos seleccionados al array
+            button.disabled = true;
+            button.classList.add('loading');
             checkboxes.forEach(function (checkbox) {
                 if (checkbox.checked) {
                     selectedItems.push(checkbox.value);
@@ -67,6 +70,9 @@
         .then(data => {
             datosRespuesta = data;
             console.log(data);
+            button.disabled = false;
+            button.classList.remove('loading');
+            window.location.href = '/archivos'
         })
         .catch(err => console.error(err));
         }

@@ -44,6 +44,9 @@
             var selectedItems = [];
             var selectedValue = document.getElementById("opciones").value;
             // Recorrer los checkboxes y agregar los elementos seleccionados al array
+            var button = document.querySelector('button[type="button"]');
+            button.disabled = true;
+            document.body.style.cursor = 'wait';
             checkboxes.forEach(function (checkbox) {
                 if (checkbox.checked) {
                     selectedItems.push(checkbox.value);
@@ -63,6 +66,8 @@
         .then(data => {
             datosRespuesta = data;
             //console.log(data);
+            button.disabled = false;
+            document.body.style.cursor = 'auto';
             window.location.href = '/archivos';
         })
         .catch(err => console.error(err));
@@ -79,6 +84,9 @@
             var checkboxes = document.getElementsByName('selected_files');
             var selectedItems = [];
             var selectedValue = document.getElementById("opciones").value;
+            var button = document.querySelector('button[type="button"]');
+            button.disabled = true;
+            document.body.style.cursor = 'wait';
             // Recorrer los checkboxes y agregar los elementos seleccionados al array
             checkboxes.forEach(function (checkbox) {
                 if (checkbox.checked) {
@@ -98,6 +106,9 @@
         .then(response => response.text())
         .then(data => {
             datosRespuesta = data;
+            button.disabled = false;
+            document.body.style.cursor = 'auto';
+            window.location.href = '/archivos';
             console.log(data);
         })
         .catch(err => console.error(err));
