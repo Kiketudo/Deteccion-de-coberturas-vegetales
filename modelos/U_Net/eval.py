@@ -5,7 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 model = UNetResnet()
-pesos=r'E:\app\modelos\U_Net\path_modelo_entrenado1.pth'
+pesos=r'modelos\U_Net\path_modelo_entrenado1.pth'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Transformaciones para preprocesar la imagen
