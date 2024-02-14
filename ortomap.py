@@ -179,14 +179,14 @@ class orthoseg():
             mask_img.save(mask_path)
             # mpimg.imsave(os.path.join(self.sub_mask_dir,file),img_mask)
 
-def select(option,route):
-    match option:
-        case 'opcion1':
-            return UnetEval.evaluar(route)
-        case 'opcion2':
-            return WnetEval.evaluar(route)
-        case 'opcion3':
-            return demo.main(route)
+def select(option, route):
+    if option == 'opcion1':
+        return UnetEval.evaluar(route)
+    elif option == 'opcion2':
+        return WnetEval.evaluar(route)
+    elif option == 'opcion3':
+        return demo.main(route)
+        
 def parse_name(file):
         h,w = file.split('_')
         return(int(h),int(w))
