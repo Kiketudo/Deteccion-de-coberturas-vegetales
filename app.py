@@ -258,14 +258,13 @@ def crea_sesion():
         if not os.path.exists(carpeta_out):
             os.makedirs(carpeta_out)
             
-def select(option,route):
-    match option:
-        case 'opcion1':
-            return UnetEval.evaluar(route)
-        case 'opcion2':
-            return WnetEval.evaluar(route)
-        case 'opcion3':
-            return demo.main(route)
+def select(option, route):
+    if option == 'opcion1':
+        return UnetEval.evaluar(route)
+    elif option == 'opcion2':
+        return WnetEval.evaluar(route)
+    elif option == 'opcion3':
+        return demo.main(route)
         
 @app.errorhandler(404)
 def page_not_found(error):
