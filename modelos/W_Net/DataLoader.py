@@ -7,7 +7,6 @@ import numpy as np
 import pdb
 from modelos.W_Net.configure import Config
 import math
-import cupy as cp
 
 config = Config()
 
