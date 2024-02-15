@@ -67,7 +67,6 @@ def archivos():
     folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder_name)
     # Obtén la lista de archivos y carpetas en el directorio uploads
     files_and_folders = os.listdir(folder_path)
-    print('vamos a ver tio por que no entra')
     return render_template('index.html', files_and_folders=files_and_folders)
 
 def save_image(file):
@@ -109,7 +108,6 @@ def process_image():
     datos = request.get_json()
     opcion_seleccionada = datos.get('opcionSeleccionada')
     original_image_path = datos.get('imagen')
-    print('sdfsdfs')
     print(original_image_path)
     print('opcipon:'+ opcion_seleccionada)
     #original_image_path = request.data.decode('utf-8')
@@ -124,7 +122,6 @@ def process_image():
     uploaded_images=session.get('uploaded_images')
     uploaded_images[original_image_path]=processed_image_path
     session['uploaded_images']=uploaded_images
-    print(uploaded_images)
     print(processed_image_path)
     return processed_image_path
 
@@ -179,7 +176,6 @@ def process_various():
         uploaded_images=session.get('uploaded_images')
         uploaded_images[original_image_path]=processed_image_path
         session['uploaded_images']=uploaded_images
-        print(uploaded_images)
     return uploaded_images
 
 @app.route('/ortho', methods=['GET', 'POST'])
